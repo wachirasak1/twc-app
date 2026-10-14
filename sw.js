@@ -1,6 +1,6 @@
 /* TWC Warehouse — Service Worker: เก็บหน้าเปิดแอปไว้ในเครื่อง เพื่อให้เปิดไวและแสดงหน้า "ไม่มีอินเทอร์เน็ต" ได้
  * ข้อมูลคลังสินค้าทั้งหมดยังอ่าน/เขียนผ่าน Google Apps Script แบบออนไลน์เสมอ (ไม่แคชข้อมูล) */
-const CACHE = 'twc-app-v1';
+const CACHE = 'twc-app-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
