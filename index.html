@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TWC Warehouse</title>
+<meta name="description" content="TWC Warehouse — ระบบบริหารคลังสินค้า รับเข้า ป้ายบาร์โค้ด และสแกนจ่ายออก">
+<meta name="theme-color" content="#ffffff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TWC Warehouse">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<script>
+/* =====================================================================
+ *  ตั้งค่าครั้งเดียว: วางลิงก์ Web app ของ Google Apps Script (ลงท้ายด้วย /exec)
+ *  ตัวอย่าง: 'https://script.google.com/macros/s/AKfycb..../exec'
+ *  ถ้าเว้นว่าง แอปจะถามลิงก์ตอนเปิดครั้งแรก (เก็บในเครื่องนั้น)
+ * ===================================================================== */
+const TWC_WEBAPP_URL = '';
+</script>
+<style>
+:root{--navy:#0F1E3D;--fg:#14213D;--muted:#5B6B86;--line:#D9E0EC;--blue:#1E63D6;--bg:#ffffff}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:var(--bg);overscroll-behavior:none}
+body{font-family:"IBM Plex Sans Thai","Sarabun","Noto Sans Thai",system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--fg);-webkit-tap-highlight-color:transparent}
+#frame{position:fixed;top:env(safe-area-inset-top,0px);right:env(safe-area-inset-right,0px);bottom:env(safe-area-inset-bottom,0px);left:env(safe-area-inset-left,0px);width:calc(100% - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px));height:calc(100% - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));border:0;background:var(--bg)}
+.screen{position:fixed;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:calc(24px + env(safe-area-inset-top,0px)) 24px calc(24px + env(safe-area-inset-bottom,0px));text-align:center;background:var(--navy);color:#fff;transition:opacity .35s}
+.screen[hidden]{display:none}
+.screen.fade{opacity:0;pointer-events:none}
+.screen.light{background:var(--bg);color:var(--fg)}
+.logo{width:92px;height:92px;border-radius:24px;box-shadow:0 12px 32px rgba(106,92,255,.45)}
+h1{font-size:1.45em;font-weight:700;letter-spacing:.2px}
+p{max-width:34ch;line-height:1.6;color:#B9C4DA}
+.light p{color:var(--muted)}
+.spin{width:30px;height:30px;border-radius:50%;border:3px solid rgba(255,255,255,.25);border-top-color:#fff;animation:r .9s linear infinite}
+@keyframes r{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:3s}}
+.btn{appearance:none;border:0;border-radius:12px;min-height:48px;padding:0 22px;font:inherit;font-weight:600;font-size:1em;cursor:pointer;background:var(--blue);color:#fff;width:100%;max-width:320px}
+.btn.ghost{background:transparent;color:inherit;border:1.5px solid currentColor;opacity:.85}
+.light .btn.ghost{color:var(--blue)}
+input{width:100%;max-width:320px;min-height:48px;border-radius:12px;border:1.5px solid var(--line);padding:0 14px;font:inherit;font-size:16px;font-family:ui-monospace,Menlo,Consolas,monospace}
+input:focus{outline:2px solid var(--blue);outline-offset:1px}
+.err{color:#C0392B;font-size:.9em;min-height:1.2em}
+small{opacity:.7;font-size:.8em}
+.ico{font-size:44px;line-height:1}
+</style>
+</head>
+<body>
+<iframe id="frame" title="TWC Warehouse" hidden allow="camera *; microphone *; clipboard-read *; clipboard-write *; fullscreen *; geolocation *"></iframe>
+
+<section class="screen" id="splash">
+  <img class="logo" src="icons/icon-192.png" alt="">
+  <h1>TWC Warehouse</h1>
+  <div class="spin" role="status" aria-label="กำลังโหลด"></div>
+  <p id="splash-t">กำลังเชื่อมต่อระบบ…</p>
+</section>
+
+<section class="screen light" id="setup" hidden>
+  <img class="logo" src="icons/icon-192.png" alt="">
+  <h1>ตั้งค่าแอปครั้งแรก</h1>
+  <p>วางลิงก์ระบบ TWC Warehouse (Web app ที่ลงท้ายด้วย <b>/exec</b>) ขอจากผู้ดูแลระบบ หรือคัดลอกจากหน้า ตั้งค่า ในระบบ</p>
+  <input id="url" type="url" inputmode="url" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec">
+  <div class="err" id="url-err"></div>
+  <button class="btn" id="url-save">เริ่มใช้งาน</button>
+</section>
+
+<section class="screen" id="offline" hidden>
+  <div class="ico" aria-hidden="true">📶</div>
+  <h1>ไม่มีการเชื่อมต่ออินเทอร์เน็ต</h1>
+  <p>TWC Warehouse ต้องใช้อินเทอร์เน็ตเพื่ออัปเดตสต๊อกแบบเรียลไทม์ ตรวจ Wi-Fi หรือเน็ตมือถือ แล้วลองใหม่</p>
+  <button class="btn" data-retry>ลองใหม่</button>
+</section>
+
+<section class="screen" id="slow" hidden>
+  <div class="ico" aria-hidden="true">⏳</div>
+  <h1>เชื่อมต่อช้ากว่าปกติ</h1>
+  <p>ระบบยังไม่ตอบกลับ อาจเป็นเพราะสัญญาณอินเทอร์เน็ต หรือลิงก์ระบบไม่ถูกต้อง</p>
+  <button class="btn" data-retry>ลองใหม่</button>
+  <button class="btn ghost" id="open-web">เปิดในเบราว์เซอร์</button>
+  <button class="btn ghost" id="reset-url" hidden>เปลี่ยนลิงก์ระบบ</button>
+</section>
+
+<script>
+(function () {
+  var KEY = 'twc_app_url', frame = document.getElementById('frame'), ready = false, timer = null;
+  var $ = function (id) { return document.getElementById(id); };
+  function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { return null; } }
+  function valid(u) { return /^https:\/\/script\.google(usercontent)?\.com\/.+/i.test(u) || /^https:\/\/[^\s]+\/exec(\?.*)?$/i.test(u); }
+  function appUrl() {
+    var q = new URLSearchParams(location.search).get('u');
+    if (q && valid(q)) store(KEY, q);
+    return (TWC_WEBAPP_URL && valid(TWC_WEBAPP_URL)) ? TWC_WEBAPP_URL : (store(KEY) || '');
+  }
+  function show(id) { ['splash', 'setup', 'offline', 'slow'].forEach(function (s) { var el = $(s); el.hidden = s !== id; el.classList.remove('fade'); }); }
+  function withApp(u) { var go = new URLSearchParams(location.search).get('go'); return u + (u.indexOf('?') < 0 ? '?' : '&') + 'app=1' + (go && /^[a-z]+$/.test(go) ? '&go=' + go : ''); }
+  function start() {
+    var u = appUrl(); clearTimeout(timer); ready = false;
+    if (!u) { show('setup'); setTimeout(function () { $('url').focus(); }, 100); return; }
+    if (!navigator.onLine) { show('offline'); return; }
+    show('splash'); $('splash-t').textContent = 'กำลังเชื่อมต่อระบบ…';
+    frame.hidden = false; frame.src = withApp(u);
+    timer = setTimeout(function () { if (!ready) $('splash-t').textContent = 'กำลังเริ่มระบบ อาจใช้เวลาสักครู่ในการเปิดครั้งแรก…'; }, 6000);
+    timer = setTimeout(function () { if (!ready) { $('reset-url').hidden = !!TWC_WEBAPP_URL; show('slow'); } }, 25000);
+  }
+  function done() {
+    if (ready) return; ready = true; clearTimeout(timer);
+    ['splash', 'slow'].forEach(function (s) { var el = $(s); if (!el.hidden) { el.classList.add('fade'); setTimeout(function () { el.hidden = true; el.classList.remove('fade'); }, 400); } });
+  }
+  // ระบบหลักส่งสัญญาณ ready เมื่อหน้าเข้าสู่ระบบ/แดชบอร์ดพร้อม
+  window.addEventListener('message', function (e) { if (e.data && e.data.twc === 'ready') done(); });
+  // สำรอง: ถ้าไม่ได้รับสัญญาณ (ระบบเวอร์ชันเก่า) ให้ปิด splash หลังโหลดเฟรมเสร็จสักครู่
+  frame.addEventListener('load', function () { setTimeout(done, 3500); });
+
+  $('url-save').onclick = function () {
+    var v = $('url').value.trim();
+    if (!valid(v)) { $('url-err').textContent = 'ลิงก์ไม่ถูกต้อง — ต้องเป็นลิงก์ Web app ที่ขึ้นต้นด้วย https:// และลงท้ายด้วย /exec'; return; }
+    $('url-err').textContent = ''; store(KEY, v); start();
+  };
+  $('url').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('url-save').click(); });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-retry]'), function (b) { b.onclick = start; });
+  $('open-web').onclick = function () { var u = appUrl(); if (u) window.open(u, '_blank', 'noopener'); };
+  $('reset-url').onclick = function () { store(KEY, null); frame.src = 'about:blank'; frame.hidden = true; start(); };
+  window.addEventListener('offline', function () { if (!ready) show('offline'); });
+  window.addEventListener('online', function () { if (!$('offline').hidden) start(); });
+
+  if ('serviceWorker' in navigator && window.isSecureContext) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { /* ใช้งานได้ปกติแม้ไม่มี SW */ }); });
+  }
+  start();
+})();
+</script>
+</body>
+</html>

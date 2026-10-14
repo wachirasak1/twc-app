@@ -1,0 +1,25 @@
+{
+  "id": "./",
+  "name": "TWC Warehouse",
+  "short_name": "TWC Warehouse",
+  "description": "ระบบบริหารคลังสินค้า รับเข้า พิมพ์ป้ายบาร์โค้ด และสแกนจ่ายออก ตัดสต๊อกอัตโนมัติ",
+  "lang": "th",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#0F1E3D",
+  "theme_color": "#ffffff",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "สแกนจ่ายออก", "short_name": "สแกนจ่าย", "url": "./?go=scan", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "รับสินค้าเข้า", "short_name": "รับเข้า", "url": "./?go=receive", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
